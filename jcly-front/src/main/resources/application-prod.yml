@@ -23,13 +23,13 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://47.98.199.1:3306/jcly-shop?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true&connectTimeout=60000&socketTimeout=60000
+    url: jdbc:mysql://43.138.4.152:3306/jcly-shop?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true&connectTimeout=60000&socketTimeout=60000
     username: root
-    password: gsafety@123
+    password: qazwsx123
   redis:
-    host: 47.98.199.1      # 地址
+    host: 43.138.4.152      # 地址
     port: 6389 # 端口
-    password: gsafety@123 # 密码，建议生产环境开启
+    password: tq810428? # 密码，建议生产环境开启
     timeout: 300000 # 连接超时时间（毫秒）
     database: 10  #默认数据库
     jedis:

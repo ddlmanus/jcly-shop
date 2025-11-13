@@ -63,9 +63,9 @@ spring:
     username: root
     password: blackstone2008_p@ssw0rd
   redis:
-    host: 47.98.199.1      # 地址
+    host: 43.138.4.152      # 地址
     port: 6389 # 端口
-    password: gsafety@123 # 密码，建议生产环境开启
+    password: tq810428?
     timeout: 300000 # 连接超时时间（毫秒）
     database: 10  #默认数据库
     jedis:
@@ -155,9 +155,9 @@ wx:
   miniapp: #微信小程序，不用时，需要注释
     useRedis: true
     redisConfig:
-      host: 47.98.199.1      # 地址
+      host: 43.138.4.152      # 地址
       port: 6389 # 端口
-      password: gsafety@123 # 密码，建议生产环境开启
+      password: tq810428?
       timeout: 300000 # 连接超时时间（毫秒）
       database: 10  #默认数据库
     configs:
