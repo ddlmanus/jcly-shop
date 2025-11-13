@@ -1,0 +1,414 @@
+# CRMEB 相关配置
+crmeb:
+  version: JAVA-MER-v1.9 # 当前代码版本
+  domain: https://shop.jclyyun.com/ #配合swagger使用 # 待部署域名
+  wechat-api-url:  #请求微信接口中专服务器
+  asyncConfig: false #是否同步config表数据到redis
+  imagePath: /Users/mac/tools/code/荆楚粮油云商城/jcly-shop/ # 服务器图片路径配置 斜杠结尾
+  retailStoreBrokerageRatio: 30 #佣金返佣比例和上限
+  activityStyleCachedTime: 10 #活动边框缓存周期 秒为单位，生产环境适当5-10分钟即可
+  selectProductLimit: 100 # 商品选择 指定商品上线
+  productTagCacheMinutes: 10 # 商品标签缓存分钟数
+  orderCancelTime: 30 # 订单支付取消时间，单位分钟
+  phoneMaskSwitch: true # 手机号掩码开关，true-开启,false-关闭
+  wxPayVersion: V2 #微信支付版本号,V2-V2支付，V3-V3支付
+  wxPcScanSwitch: 0 #微信扫码开关:0-关闭微信扫码，1-微信网页应用扫码，2-微信公众号扫码
+  ignored: #安全路径白名单
+    - swagger-ui/
+    - swagger-resources/**
+    - /**/v2/api-docs
+    - /**/*.html
+    - /**/*.js
+    - /**/*.css
+    - /**/*.png
+    - /**/*.map
+    - /favicon.ico
+    - /actuator/**
+    - /druid/**
+    - api/front/pagediy/info
+    - api/front/merchant/page/diy/info
+    - api/front/login/mobile/quick
+
+# 配置端口
+server:
+  port: 20810
+  servlet:
+    context-path: /         # 访问path
+  tomcat:
+    uri-encoding: UTF-8     # 默认编码格式
+    max-threads: 1000       # 最大线程数量 默认200
+    min-spare-threads: 30   # 初始化启动线程数量
+
+spring:
+  profiles:
+    active: prod
+  servlet:
+    multipart:
+      max-file-size: 50MB #设置单个文件大小
+      max-request-size: 50MB #设置单次请求文件的总大小
+  resources:
+    static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,file:${crmeb.filePath}
+    add-mappings: true
+  application:
+    name: jcly-front #这个很重要，这在以后的服务与服务之间相互调用一般都是根据这个name
+  jackson:
+    locale: zh_CN
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  #  数据库配置
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://47.94.251.17:23306/jcly-shop?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&nullCatalogMeansCurrent=true&rewriteBatchedStatements=true&connectTimeout=60000&socketTimeout=60000
+    username: root
+    password: blackstone2008_p@ssw0rd
+  redis:
+    host: 47.98.199.1      # 地址
+    port: 6389 # 端口
+    password: gsafety@123 # 密码，建议生产环境开启
+    timeout: 300000 # 连接超时时间（毫秒）
+    database: 10  #默认数据库
+    jedis:
+      pool:
+        max-active: 200 # 连接池最大连接数（使用负值表示没有限制）
+        max-wait: -1 # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-idle: 10 # 连接池中的最大空闲连接
+        min-idle: 0 # 连接池中的最小空闲连接
+        time-between-eviction-runs: -1 #逐出扫描的时间间隔(毫秒) 如果为负数,则不运行逐出线程, 默认-1
+  # 捕获404异常
+  mvc:
+    throw-exception-if-no-handler-found: true
+
+debug: true
+logging:
+  level:
+    io.swagger.*: error
+    com.zbjk.crmeb: debug
+    org.springframework.boot.autoconfigure: ERROR
+  config: classpath:logback-spring.xml
+  file:
+    path: ./jcly_shop_log
+
+# mybatis 配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/*/*Mapper.xml #xml扫描，多个目录用逗号或者分号分隔（告诉 Mapper 所对应的 XML 文件位置）
+  # 配置slq打印日志
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+#      logic-delete-field: isDel  #全局逻辑删除字段值 3.3.0开始支持，详情看下面。
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+
+# 行为验证码
+aj:
+  captcha:
+    type: default       # 验证码类型
+    water-mark: CRMEB Java   # 水印
+    slip-offset: 5      # 校验滑动拼图允许误差偏移量(默认5像素)
+    aes-status: true    # aes加密坐标开启或者禁用(true|false)
+    interference-options: 2 # 滑动干扰项(0/1/2)
+    font-style: 1       # 点选字体样式 默认Font.BOLD
+    font-size: 25       # 点选字体字体大小
+    req-frequency-limit-enable: false   # 接口请求次数一分钟限制是否开启 true|false
+    req-get-lock-limit: 5     # 验证失败5次，get接口锁定
+    req-get-lock-seconds: 360   # 验证失败后，锁定时间间隔,s
+    req-get-minute-limit: 30     # get接口一分钟内请求数限制
+    req-check-minute-limit: 60    # check接口一分钟内请求数限制
+    req-verify-minute-limit: 60     # verify接口一分钟内请求数限制
+
+    # 滑动验证，底图路径，不配置将使用默认图片
+    # 支持全路径
+    # 支持项目路径,以classpath:开头,取resource目录下路径,例：classpath:images/jigsaw
+    jigsaw: classpath:images/jigsaw
+    #滑动验证，底图路径，不配置将使用默认图片
+    ##支持全路径
+    # 支持项目路径,以classpath:开头,取resource目录下路径,例：classpath:images/pic-click
+    pic-click: classpath:images/pic-click
+    # 对于分布式部署的应用，我们建议应用自己实现CaptchaCacheService，比如用Redis或者memcache，
+    # 参考CaptchaCacheServiceRedisImpl.java
+    # 如果应用是单点的，也没有使用redis，那默认使用内存。
+    # 内存缓存只适合单节点部署的应用，否则验证码生产与验证在节点之间信息不同步，导致失败。
+    # ！！！ 注意啦，如果应用有使用spring-boot-starter-data-redis，
+    # 请打开CaptchaCacheServiceRedisImpl.java注释。
+    # redis ----->  SPI： 在resources目录新建META-INF.services文件夹(两层)，参考当前服务resources。
+    # 缓存local/redis...
+    cache-type: redis
+    # local缓存的阈值,达到这个值，清除缓存
+    cache-number: 1000
+    # local定时清除过期缓存(单位秒),设置为0代表不执行
+    timing-clear: 3600
+
+    history-data-clear-enable: false
+
+#swagger 配置
+swagger:
+  basic:
+    enable: true #是否开启
+    check: false #是否打开验证
+    username: #访问swagger的账号
+    password: #访问swagger的密码
+
+# wx-java-tools 第三方框架仅仅用到了微信小程序直播功能 是用小程序直播时必须配置
+wx:
+  miniapp: #微信小程序，不用时，需要注释
+    useRedis: true
+    redisConfig:
+      host: 47.98.199.1      # 地址
+      port: 6389 # 端口
+      password: gsafety@123 # 密码，建议生产环境开启
+      timeout: 300000 # 连接超时时间（毫秒）
+      database: 10  #默认数据库
+    configs:
+      - appid: wx504c487937df91cf #微信小程序的appid
+        secret: ef3ea13441bf5d5917ffd4379f1f9fd4 #微信小程序的Secret
+        token: o9AgO5Kd5ggOC-bXrbNODIiE3bGY #微信小程序消息服务器配置的token
+        aesKey:  w4wTachp6VS5UOZFEl7pJeXXGJIaggRc8ii08dgVO6k #微信小程序消息服务器配置的EncodingAESKey
+        msgDataFormat: JSON
+  # mp: #微信公众号，不用时，需要注释
+  #   useRedis: true
+  #   redisConfig:
+  #     host: 127.0.0.1 #地址
+  #     port: 6379 #端口
+  #     password: 111111 #redis密码
+  #     timeout: 30000 # 连接超时时间（毫秒）
+  #     database: 13  #默认数据库
+  #   configs:
+  #     - appid: #微信公众号的appid
+  #       secret: #微信公众号的Secret
+  #       token: #微信公众号消息服务器配置的token
+  #       aesKey: #微信公众号消息服务器配置的EncodingAESKey
+  # open: #微信开放平台（网页应用），不用时，需要注释
+  #   useRedis: true
+  #   componentAppId: 
+  #   componentSecret: 
+  #   componentToken: 
+  #   componentAesKey: 
+  #   redisConfig:
+  #     host: 127.0.0.1 #地址
+  #     port: 6379 #端口
+  #     password: 111111 #redis密码
+  #     timeout: 30000 # 连接超时时间（毫秒）
+  #     database: 13  #默认数据库
+  pay:
+    mp: #微信公众号
+      appId: #微信公众号的appid
+      mchId: #微信支付商户号
+      mchKey: #微信支付商户密钥
+      #    subAppId: #服务商模式下的子商户公众账号ID
+      #    subMchId: #服务商模式下的子商户号
+      keyPath: # p12证书的位置，可以指定绝对路径，也可以指定类路径（以classpath:开头）
+      # apiV3Key: # apiV3 秘钥值 (V3商户模式需要)
+      # certSerialNo: # apiV3 证书序列号值 (V3商户模式需要)
+      # privateCertPath: # apiclient_cert.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # privateKeyPath: # apiclient_key.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # publicKeyPath: # 微信支付公钥，pub_key.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # publicKeyId: # 微信支付公钥ID (V3商户模式需要)
+    ma: #微信小程序
+      appId:  wx504c487937df91cf
+      mchId:  1724347329
+      mchKey: 8aB7d5Hj2kLm9pQr4tVw6yZx3cFg0hJk
+      #    subAppId: #服务商模式下的子商户公众账号ID
+      #    subMchId: #服务商模式下的子商户号
+      keyPath: /usr/local/project_file/jcly-shop/cret/apiclient_cert.p12
+      # apiV3Key: # apiV3 秘钥值 (V3商户模式需要)
+      # certSerialNo: # apiV3 证书序列号值 (V3商户模式需要)
+      # privateCertPath: # apiclient_cert.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # privateKeyPath: # apiclient_key.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # publicKeyPath: # 微信支付公钥，pub_key.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # publicKeyId: # 微信支付公钥ID (V3商户模式需要)
+    app: #微信APP
+      appId: #微信小程序的appid
+      mchId: #微信支付商户号
+      mchKey: #微信支付商户密钥
+      #    subAppId: #服务商模式下的子商户公众账号ID
+      #    subMchId: #服务商模式下的子商户号
+      keyPath: # p12证书的位置，可以指定绝对路径，也可以指定类路径（以classpath:开头）
+      # apiV3Key: # apiV3 秘钥值 (V3商户模式需要)
+      # certSerialNo: # apiV3 证书序列号值 (V3商户模式需要)
+      # privateCertPath: # apiclient_cert.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # privateKeyPath: # apiclient_key.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # publicKeyPath: # 微信支付公钥，pub_key.pem证书文件的绝对路径或者以classpath:开头的类路径. (V3商户模式需要)
+      # publicKeyId: # 微信支付公钥ID (V3商户模式需要)
+# 聚水潭ERP配置
+jst:
+  erp:
+    # 是否启用聚水潭ERP同步
+    sync:
+      enabled: true
+    # API配置
+    api:
+      # 聚水潭开放平台API地址（正式环境）
+      url: https://openapi.jushuitan.com
+      # 接口版本
+      version: 2
+      # 请求超时时间(秒)
+      timeout: 30
+      # 重试次数
+      retry: 3
+      # 重试间隔(秒)
+      retry-interval: 5
+    # 认证配置
+    auth:
+      # 应用Key
+      app-key: 4d8cd87cde434e11bee0908ccced4466
+      # 应用密钥
+      app-secret: 67ae8577fe86492b8c00e1aeb5f2a84c
+      # 认证Token
+      access-token: cd2cef3fbbf54c2db72992bf83662458
+    # 同步配置
+    sync-config:
+      # 商品同步
+      goods:
+        enabled: true
+        # 同步间隔(分钟)
+        interval: 30
+        # 批量同步大小
+        batch-size: 100
+      # 订单同步
+      order:
+        enabled: true
+        interval: 15
+        batch-size: 50
+      # 库存同步
+      inventory:
+        enabled: true
+        interval: 10
+        batch-size: 200
+      # 支付同步
+      payment:
+        enabled: true
+        interval: 5
+        batch-size: 100
+      # 退款同步
+      refund:
+        enabled: true
+        interval: 10
+        batch-size: 50
+      # 售后同步
+      aftersale:
+        enabled: true
+        interval: 20
+        batch-size: 30
+    # 数据库配置
+    database:
+      # 同步记录保留天数
+      record-retention-days: 30
+      # 日志记录级别
+      log-level: INFO
+    # 告警配置
+    alert:
+      # 是否启用告警
+      enabled: true
+      # 失败率告警阈值(%)
+      failure-rate-threshold: 20
+      # 告警间隔(分钟)
+      interval: 60
+      # 告警邮件配置
+      email:
+        enabled: false
+        recipients:
+          - admin@example.com
+      # 企业微信告警
+      wechat:
+        enabled: false
+        webhook-url: ""
+    # 安全配置
+    security:
+      # 是否启用签名验证
+      signature-enabled: true
+      # 签名算法
+      signature-algorithm: MD5
+      # IP白名单
+      ip-whitelist:
+        - 127.0.0.1
+        - ::1
+    # 缓存配置
+    cache:
+      # 是否启用缓存
+      enabled: true
+      # 缓存过期时间(分钟)
+      expire-minutes: 10
+      # 缓存前缀
+      prefix: "jst:erp:"
+  unionpay:
+    merchant:
+      id: 1
+    app:
+      id: 1
+    private:
+     key: 1 # 商户私钥
+    public:
+      key:  1 # 商户公钥
+    api:
+      url: https://open.unionpay.com/ajweb/gateway/accpApi
+    enabled: true
+coze:
+  api:
+    # Coze API基础URL
+    baseUrl: https://api.coze.cn
+    # 访问令牌，需要在Coze平台生成
+    accessToken: cztei_hTUtgU2Ey4Zpu0eWCQ0NKqamFFCvVrRYa2iW6tDjccccLRFI45PyXg9Y5qzL48OSB
+    # 连接超时时间（毫秒）
+    connectTimeout: 10000
+    # 读取超时时间（毫秒）
+    readTimeout: 30000
+    # 重试次数
+    retryCount: 3
+    # Coze API 端点
+    endpoint: ${COZE_API_ENDPOINT:https://api.coze.cn}
+  # RTC语音通话相关配置
+  rtc:
+    # VolcEngine RTC 应用ID
+    # 注意：使用Coze平台返回的AppId，因为Token与该AppId绑定
+    # Coze平台AppId: 671221aa298a540183df32d9
+    # 用户自己的AppId: 68d10fb10926e4017477e5f9
+    appId: 671221aa298a540183df32d9
+    # 是否启用AppId映射修正（禁用，直接使用Coze返回的AppId）
+    enableAppIdMapping: false
+  app:
+    # OAuth 应用的 ID
+    # 获取方式：扣子平台 > 授权 > OAuth 应用 > 查看应用详情
+    id: ${COZE_APP_ID:1117545921910}
+
+    # OAuth 应用的公钥指纹
+    # 获取方式：扣子平台 > OAuth 应用配置页面 > 公钥指纹
+    public-key-fingerprint: ${COZE_PUBLIC_KEY_FINGERPRINT:A8sshoBnltgjQYEMMlUSzRvnfCDNqjlVw3L1JocJJrw}
+
+    # OAuth 应用的私钥
+    # 获取方式：从扣子平台下载的 private_key.pem 文件内容
+    # 注意：必须包含完整的 PEM 格式标记
+    private-key:  "-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDsAXD6FkGUyO65
+Ki2GNJsgtBluxpLfJdHOOcRqz+jsn/IP5AqV5XUEEtaUMx3eTo75Cyn8JamRq+Dh
+n0bQk6Frk2v99gjzJxG91fpXJVa5tz+XloS6D2g2/I84kZTmoLCE3+SsKX/UbiEg
+GME0IWx2qgjSMCkg1sX2BKUsZ4yl2WBgL4tTfqqu31EKUoK8eXV2pXpM4uwS8EKF
+tv8Ch8oAcTlGLN/2FeGUHhgpfY/p5XgtBoSyQjvE+qI+ItZ+ELCDk1oD5uase6Wr
+POO1tIbzeWsVhDnj87F/KPIQHkSlv9dux2rznjVTiP/LPx9zexInb5LjBjJeg1pt
+2sxUWVhdAgMBAAECggEAG3RveChuqKhXXSMS+LHV+g/5hXGEVIFJzvvZZbOaHSze
+NAsLUDTJUBgA7myj5OCusTojQDoBZ/jeyGCHFGyYMrOLtJeSovbAkZz66nhlhmVS
++IeCGUMBlKP85U/KSqoW3t5M89pADK5jHCDFGRNqUsOlEw6XOkLB9MTFkkzZh9Fw
+uF1bkbksZ441+G6Ff4TmYG7IzuDipvvSEjqu7b5j43vzU1POUWKiFW5s62RwiuTn
+kpjd/64TnGickrcR076rlWdnzRr4AzsOAGpHbi8kdeCy0PwnFcFtqdTLU3WS5Tsp
+pB3Po6FA/niRNL8Rk4yonlejz97GKpNF/C3+CDzb4QKBgQD7kr3voygXvr3Mvm69
+ixKDTLIcBlPcV1rRGWNI95VPNO8Uq+jtd45ZRdT4fdfcGP2zacLOfDFneQXNDKv9
+VNM87F6bL1Ahi/dX4+tu9LyLudRw1ljkYEUrtoUjfJYHDaHrJj9sMoc2MBb3uanW
+whk0iq4/yLcp6hXczh6wW7tpZwKBgQDwKJKEWWm1kPMgrpfRnZPghi865UJzqnFp
+bgw3xkTkkgcnC2LIrtmdhmlHonfnahuHzTBZySK3eGgKRPObSGJGl+lbBNk3nzR7
+D0zlBg2mtU65uFqcGUnxH9xQUFh7A+afv9G9stKcSyZKPaDkI5t67RDD8R9InGeP
+6KrXzLvhmwKBgQDScDSLkXqHKloQO7fcu8nXpT9T7AMYTMY+JTOFJP1zzT60lvz4
+L0sW6DA3UOVRSmJmQvDe0sps2LJ+jLwN5Hfy/XJB87je5vsXPSOCpBxX8TGA1fxz
+xQf3ge0q+xtwePnZ/xuMgVPTgzSjMl6cs65r4hnSZy64VATHuG+5bHJ/vwKBgQC2
+KTApb2C9NbsUuRmzB2FZVq6Qb8Ed1tS7cZuW2q766MDAHuTI78dkssU8bsGgKF3F
+fiAEmonYvF2+HFrjF95jSWrZfS3+AKZgCVT8CsFkB/Y07N7dtFjfqpkD2k2i0Wyn
+E2pWB0O1BVN/0IsvQMr4TMUAuu5Nt0TeZU7g7Qw9rQKBgEzmrbaixHck00KKYKoE
+/ldEt0WjdhqMgQrBfKltv8mvbXIOjI07SraXedQPWfCYXs5SWJPvNxmOJvqwmX6C
+7C4sWQlHI0sLpnw+ND/PdlD2JZxJXLSme1WeAaIQuistLH7vbSsu3D7D4P1GOlbV
+cjWWxdJ7/HALPYqvVVXZdJNa
+-----END PRIVATE KEY-----"
+websocket:
+  human-service:
+    endpoint: /websocket/human-service
+    allowed-origins: "*"
+    with-sockjs: true

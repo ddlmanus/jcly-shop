@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.QuickReplyTemplateDao">
+
+    <!-- 根据商户ID和分类查询模板列表 -->
+    <select id="selectByMerIdAndCategory" resultType="com.zbkj.common.model.service.QuickReplyTemplate">
+        SELECT * FROM eb_quick_reply_template
+        WHERE mer_id = #{merId}
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 根据客服ID查询私有模板 -->
+    <select id="selectByStaffId" resultType="com.zbkj.common.model.service.QuickReplyTemplate">
+        SELECT * FROM eb_quick_reply_template
+        WHERE staff_id = #{staffId}
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 获取公共模板（staff_id为空） -->
+    <select id="selectPublicTemplates" resultType="com.zbkj.common.model.service.QuickReplyTemplate">
+        SELECT * FROM eb_quick_reply_template
+        WHERE mer_id = #{merId}
+        AND staff_id IS NULL
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 批量删除模板 -->
+    <delete id="deleteByIds">
+        DELETE FROM eb_quick_reply_template
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 更新模板排序 -->
+    <update id="updateSort">
+        UPDATE eb_quick_reply_template
+        SET sort = #{sort}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

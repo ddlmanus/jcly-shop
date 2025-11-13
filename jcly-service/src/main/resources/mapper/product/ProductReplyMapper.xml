@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.ProductReplyDao">
+
+    <select id="getMerchantAdminPage" resultType="com.zbkj.common.model.product.ProductReply" parameterType="Map">
+        select *
+        from eb_product_reply pr
+        left join eb_user as u on pr.uid = u.id
+        where pr.is_del = 0
+        <if test="merId != null ">
+            and pr.mer_id = #{merId}
+        </if>
+        <if test="star != null ">
+            and pr.star = #{star}
+        </if>
+        <if test="productSearch != null and productSearch !=''">
+            <choose>
+                <when test="merId != null">
+                    and pr.product_id in (select p.id from eb_product p where p.name like CONCAT('%',#{productSearch},'%') and p.is_del = 0 and p.mer_id = #{merId})
+                </when>
+                <otherwise>
+                    and pr.product_id in (select p.id from eb_product p where p.name like CONCAT('%',#{productSearch},'%') and p.is_del = 0)
+                </otherwise>
+            </choose>
+        </if>
+        <if test="isReply != null ">
+            and pr.is_reply = #{isReply}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            and pr.create_time between #{startTime} and #{endTime}
+        </if>
+        <if test="keywords != '' and keywords != null ">
+            and (
+            pr.uid like CONCAT('%',#{keywords},'%') or
+            u.nickname like CONCAT('%',#{keywords},'%') or
+            u.phone like CONCAT('%',#{keywords},'%')
+            )
+        </if>
+        <if test="uid != null ">
+            and pr.uid = #{uid}
+        </if>
+        <if test="nickname != '' and nickname != null ">
+            and u.nickname like CONCAT('%',#{nickname},'%')
+        </if>
+        <if test="phone != '' and phone != null ">
+            and u.phone like CONCAT('%',#{phone},'%')
+        </if>
+        order by pr.id desc
+    </select>
+
+    <select id="getPlatAdminPage" resultType="com.zbkj.common.model.product.ProductReply" parameterType="Map">
+        select *
+        from eb_product_reply pr
+        left join eb_user as u on pr.uid = u.id
+        where pr.is_del = 0
+        <if test="merId != null ">
+            and pr.mer_id = #{merId}
+        </if>
+        <if test="star != null ">
+            and pr.star = #{star}
+        </if>
+        <if test="productSearch != null and productSearch !=''">
+            <choose>
+                <when test="merId != null">
+                    and pr.product_id in (select p.id from eb_product p where p.name like CONCAT('%',#{productSearch},'%') and p.is_del = 0 and p.mer_id = #{merId})
+                </when>
+                <otherwise>
+                    and pr.product_id in (select p.id from eb_product p where p.name like CONCAT('%',#{productSearch},'%') and p.is_del = 0)
+                </otherwise>
+            </choose>
+        </if>
+        <if test="isReply != null ">
+            and pr.is_reply = #{isReply}
+        </if>
+        <if test="startTime != null and startTime != ''">
+            and pr.create_time between #{startTime} and #{endTime}
+        </if>
+        <if test="keywords != '' and keywords != null ">
+            and (
+            pr.uid like CONCAT('%',#{keywords},'%') or
+            u.nickname like CONCAT('%',#{keywords},'%') or
+            u.phone like CONCAT('%',#{keywords},'%')
+            )
+        </if>
+        <if test="uid != null ">
+            and pr.uid = #{uid}
+        </if>
+        <if test="nickname != '' and nickname != null ">
+            and u.nickname like CONCAT('%',#{nickname},'%')
+        </if>
+        <if test="phone != '' and phone != null ">
+            and u.phone like CONCAT('%',#{phone},'%')
+        </if>
+        order by pr.id desc
+    </select>
+
+    <!-- 批量获取商品评论统计数据 - 性能优化查询 -->
+    <select id="batchGetReplyCountByProductIds" resultType="java.util.HashMap">
+        SELECT 
+            product_id as `key`,
+            COUNT(*) as `value`
+        FROM eb_product_reply
+        WHERE is_del = 0
+        AND product_id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+        <choose>
+            <when test="type == 'all'">
+                <!-- 全部评论 -->
+            </when>
+            <when test="type == 'good'">
+                AND star = 5
+            </when>
+            <when test="type == 'medium'">
+                AND star > 1 AND star &lt; 5
+            </when>
+            <when test="type == 'poor'">
+                AND star = 1
+            </when>
+        </choose>
+        GROUP BY product_id
+    </select>
+</mapper>

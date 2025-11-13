@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryAreaDao">
+
+    <!-- 根据位置获取服务区域 -->
+    <select id="getAreasByLocation" resultType="com.zbkj.common.model.order.CityDeliveryArea">
+        SELECT * FROM eb_city_delivery_area 
+        WHERE is_del = 0 
+        AND status = 1
+        AND (
+            6371 * acos(
+                cos(radians(#{latitude})) 
+                * cos(radians(center_latitude)) 
+                * cos(radians(center_longitude) - radians(#{longitude})) 
+                + sin(radians(#{latitude})) 
+                * sin(radians(center_latitude))
+            )
+        ) &lt;= service_radius
+        ORDER BY service_radius ASC
+    </select>
+
+    <!-- 根据城市获取区域 -->
+    <select id="getAreasByCity" resultType="com.zbkj.common.model.order.CityDeliveryArea">
+        SELECT * FROM eb_city_delivery_area 
+        WHERE is_del = 0
+        <if test="province != null and province != ''">
+            AND province = #{province}
+        </if>
+        <if test="city != null and city != ''">
+            AND city = #{city}
+        </if>
+        <if test="district != null and district != ''">
+            AND district = #{district}
+        </if>
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 获取启用的区域 -->
+    <select id="getEnabledAreas" resultType="com.zbkj.common.model.order.CityDeliveryArea">
+        SELECT * FROM eb_city_delivery_area 
+        WHERE is_del = 0 
+        AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 根据区域名称获取区域 -->
+    <select id="getAreaByName" resultType="com.zbkj.common.model.order.CityDeliveryArea">
+        SELECT * FROM eb_city_delivery_area 
+        WHERE area_name = #{areaName} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 更新区域状态 -->
+    <update id="updateAreaStatus">
+        UPDATE eb_city_delivery_area 
+        SET status = #{status}, 
+            update_time = NOW()
+        WHERE id = #{areaId} AND is_del = 0
+    </update>
+
+    <!-- 批量更新区域状态 -->
+    <update id="batchUpdateAreaStatus">
+        UPDATE eb_city_delivery_area 
+        SET status = #{status}, 
+            update_time = NOW()
+        WHERE id IN 
+        <foreach collection="areaIds" item="areaId" open="(" separator="," close=")">
+            #{areaId}
+        </foreach>
+        AND is_del = 0
+    </update>
+
+    <!-- 检查位置是否在区域范围内 -->
+    <select id="checkLocationInArea" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM eb_city_delivery_area 
+        WHERE id = #{areaId} 
+        AND is_del = 0 
+        AND status = 1
+        AND (
+            6371 * acos(
+                cos(radians(#{latitude})) 
+                * cos(radians(center_latitude)) 
+                * cos(radians(center_longitude) - radians(#{longitude})) 
+                + sin(radians(#{latitude})) 
+                * sin(radians(center_latitude))
+            )
+        ) &lt;= service_radius
+    </select>
+
+    <!-- 获取区域配送时间段 -->
+    <select id="getAreaTimeSlots" resultType="java.lang.String">
+        SELECT delivery_time_slots FROM eb_city_delivery_area 
+        WHERE id = #{areaId} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据费用规则获取区域 -->
+    <select id="getAreasByFeeRule" resultType="com.zbkj.common.model.order.CityDeliveryArea">
+        SELECT * FROM eb_city_delivery_area 
+        WHERE fee_rule_id = #{feeRuleId} AND is_del = 0
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 获取区域统计信息 -->
+    <select id="getAreaWithStats" resultType="com.zbkj.common.model.order.CityDeliveryArea">
+        SELECT * FROM eb_city_delivery_area 
+        WHERE id = #{areaId} AND is_del = 0
+        LIMIT 1
+    </select>
+
+</mapper> 

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryCustomerRatingDao">
+
+    <!-- 根据配送员ID统计评价数据 -->
+    <select id="getDriverRatingStats" resultType="map">
+        SELECT 
+            COUNT(*) as total_count,
+            ROUND(AVG(overall_rating), 2) as avg_rating,
+            COUNT(CASE WHEN overall_rating >= 4.5 THEN 1 END) as excellent_count,
+            COUNT(CASE WHEN overall_rating >= 3.5 AND overall_rating &lt; 4.5 THEN 1 END) as good_count,
+            COUNT(CASE WHEN overall_rating >= 2.5 AND overall_rating &lt; 3.5 THEN 1 END) as average_count,
+            COUNT(CASE WHEN overall_rating &lt; 2.5 THEN 1 END) as poor_count,
+            ROUND(AVG(speed_rating), 2) as avg_speed_rating,
+            ROUND(AVG(service_rating), 2) as avg_service_rating,
+            ROUND(AVG(quality_rating), 2) as avg_quality_rating,
+            ROUND(AVG(overall_rating), 2) as avg_overall_rating,
+            COUNT(CASE WHEN comment IS NOT NULL AND comment != '' THEN 1 END) as comment_count
+        FROM eb_city_delivery_customer_rating 
+        WHERE driver_id = #{driverId} 
+        AND is_del = 0
+        AND audit_status = 1
+    </select>
+
+    <!-- 获取配送员评价趋势数据 -->
+    <select id="getDriverRatingTrend" resultType="map">
+        SELECT 
+            DATE_FORMAT(create_time, '%Y-%m-%d') as rating_date,
+            COUNT(*) as daily_count,
+            ROUND(AVG(overall_rating), 2) as daily_avg_rating
+        FROM eb_city_delivery_customer_rating 
+        WHERE driver_id = #{driverId}
+        AND is_del = 0
+        AND audit_status = 1
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m-%d')
+        ORDER BY rating_date ASC
+    </select>
+
+    <!-- 计算配送员平均评分 -->
+    <select id="calculateDriverAverageRating" resultType="java.math.BigDecimal">
+        SELECT ROUND(AVG(overall_rating), 2)
+        FROM eb_city_delivery_customer_rating 
+        WHERE driver_id = #{driverId}
+        AND is_del = 0
+        AND audit_status = 1
+    </select>
+
+    <!-- 获取配送员各维度评分统计 -->
+    <select id="getDriverRatingDimensionStats" resultType="map">
+        SELECT 
+            ROUND(AVG(speed_rating), 2) as delivery_speed,
+            ROUND(AVG(service_rating), 2) as service_attitude,
+            ROUND(AVG(quality_rating), 2) as goods_integrity,
+            ROUND(AVG(overall_rating), 2) as delivery_accuracy
+        FROM eb_city_delivery_customer_rating 
+        WHERE driver_id = #{driverId}
+        AND is_del = 0
+        AND audit_status = 1
+    </select>
+
+    <!-- 批量更新审核状态 -->
+    <update id="batchUpdateAuditStatus">
+        UPDATE eb_city_delivery_customer_rating 
+        SET audit_status = #{auditStatus},
+            audit_remark = #{auditRemark},
+            audit_admin_id = #{auditAdminId},
+            audit_time = #{auditTime},
+            update_time = NOW()
+        WHERE id IN 
+        <foreach collection="ratingIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 获取评价统计报表 -->
+    <select id="getRatingStatisticsReport" resultType="map">
+        SELECT 
+            COUNT(*) as total_ratings,
+            ROUND(AVG(overall_rating), 2) as avg_overall_rating,
+            COUNT(DISTINCT driver_id) as rated_drivers,
+            COUNT(DISTINCT delivery_order_no) as rated_orders,
+            COUNT(CASE WHEN overall_rating >= 4.5 THEN 1 END) as excellent_ratings,
+            COUNT(CASE WHEN overall_rating >= 3.5 AND overall_rating &lt; 4.5 THEN 1 END) as good_ratings,
+            COUNT(CASE WHEN overall_rating >= 2.5 AND overall_rating &lt; 3.5 THEN 1 END) as average_ratings,
+            COUNT(CASE WHEN overall_rating &lt; 2.5 THEN 1 END) as poor_ratings,
+            COUNT(CASE WHEN comment IS NOT NULL AND comment != '' THEN 1 END) as with_comments,
+            ROUND(AVG(speed_rating), 2) as avg_speed_rating,
+            ROUND(AVG(service_rating), 2) as avg_service_rating,
+            ROUND(AVG(quality_rating), 2) as avg_quality_rating,
+            ROUND(AVG(overall_rating), 2) as avg_accuracy_rating
+        FROM eb_city_delivery_customer_rating 
+        WHERE is_del = 0
+        AND audit_status = 1
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- 根据多个配送订单号查询评价 -->
+    <select id="selectByDeliveryOrderNos" resultType="com.zbkj.common.model.order.CityDeliveryCustomerRating">
+        SELECT * FROM eb_city_delivery_customer_rating 
+        <where>
+            <if test="deliveryOrderNos != null and deliveryOrderNos.size() > 0">
+                delivery_order_no IN 
+                <foreach collection="deliveryOrderNos" item="orderNo" open="(" close=")" separator=",">
+                    #{orderNo}
+                </foreach>
+            </if>
+            AND is_del = 0
+        </where>
+    </select>
+
+</mapper> 

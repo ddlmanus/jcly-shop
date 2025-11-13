@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CustomerServiceStaffDao">
+
+    <!-- 根据员工ID查询客服信息 -->
+    <select id="selectByAdminId" resultType="com.zbkj.common.model.service.CustomerServiceStaff">
+        SELECT * FROM eb_customer_service_staff
+        WHERE admin_id = #{adminId}
+        AND status = 1
+        LIMIT 1
+    </select>
+
+    <!-- 获取可分配的客服列表 -->
+    <select id="selectAvailableStaff" resultType="com.zbkj.common.model.service.CustomerServiceStaff">
+        SELECT * FROM eb_customer_service_staff
+        WHERE mer_id = #{merId} 
+        AND status = 1 
+        AND online_status = 'ONLINE'
+        AND current_sessions &lt; max_concurrent_sessions
+        <if test="serviceLevel != null and serviceLevel != ''">
+            AND service_level = #{serviceLevel}
+        </if>
+        ORDER BY current_sessions ASC, total_served_sessions DESC
+    </select>
+
+    <!-- 更新客服在线状态 -->
+    <update id="updateOnlineStatus">
+        UPDATE eb_customer_service_staff
+        SET online_status = #{onlineStatus},
+            last_online_time = NOW(),
+            update_time = NOW()
+        WHERE id = #{staffId}
+    </update>
+
+    <!-- 更新当前会话数 -->
+    <update id="updateCurrentSessions">
+        UPDATE eb_customer_service_staff
+        SET current_sessions = current_sessions + #{increment},
+            update_time = NOW()
+        WHERE id = #{staffId}
+        AND current_sessions + #{increment} >= 0
+    </update>
+
+    <!-- 获取在线客服统计 -->
+    <select id="countOnlineStaff" resultType="Integer">
+        SELECT COUNT(*) FROM eb_customer_service_staff
+        WHERE mer_id = #{merId} 
+        AND status = 1 
+        AND online_status = 'ONLINE'
+    </select>
+
+</mapper>

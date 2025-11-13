@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.HumanServiceMessageDao">
+
+    <!-- 获取会话未读消息数 -->
+    <select id="countUnreadMessages" resultType="Integer">
+        SELECT COUNT(*) FROM human_service_message 
+        WHERE session_id = #{sessionId} 
+        AND receiver_id = #{receiverId}
+        AND is_read = 0
+    </select>
+
+    <!-- 批量标记消息为已读 -->
+    <update id="markMessagesAsRead">
+        UPDATE human_service_message 
+        SET is_read = 1, read_time = NOW(), update_time = NOW()
+        WHERE session_id = #{sessionId} 
+        AND receiver_id = #{receiverId}
+        AND is_read = 0
+    </update>
+
+    <!-- 获取用户离线消息 -->
+    <select id="selectOfflineMessages" resultType="com.zbkj.common.model.service.HumanServiceMessage">
+        SELECT * FROM human_service_message 
+        WHERE receiver_id = #{receiverId} 
+        AND receiver_type = #{receiverType}
+        AND is_read = 0
+        ORDER BY create_time ASC
+        LIMIT 50
+    </select>
+
+    <!-- 获取会话最后一条消息 -->
+    <select id="selectLastMessage" resultType="com.zbkj.common.model.service.HumanServiceMessage">
+        SELECT * FROM human_service_message 
+        WHERE session_id = #{sessionId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+</mapper>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.InvoiceDao">
+
+    <!-- 发票分页列表查询 -->
+    <select id="selectInvoicePageList" resultType="com.zbkj.common.response.InvoicePageResponse">
+        SELECT 
+            i.id,
+            i.invoice_no,
+            i.order_no,
+            i.uid,
+            u.account as user_account,
+            u.nickname,
+            u.phone as user_phone,
+            i.mer_id,
+            m.name as merchant_name,
+            o.pay_price as order_amount,
+            o.status as order_status,
+            i.invoice_title,
+            i.invoice_type,
+            i.invoice_title_type,
+            i.invoice_amount,
+            i.tax_number,
+            i.contact_email,
+            i.contact_name,
+            i.contact_phone,
+            i.status,
+            i.invoice_code,
+            i.invoice_date,
+            i.remark,
+            i.audit_status,
+            i.auditor_id,
+            sa.real_name as auditor_name,
+            i.audit_time,
+            i.audit_remark,
+            i.invoice_file_url,
+            i.invoice_file_name,
+            i.create_time,
+            i.update_time,
+            i.contact_address,
+            i.bank_name,
+            i.bank_account,
+            i.invoice_content
+        FROM eb_invoice i
+        LEFT JOIN eb_user u ON i.uid = u.id
+        LEFT JOIN eb_merchant m ON i.mer_id = m.id
+        LEFT JOIN eb_order o ON i.order_no = o.order_no
+        LEFT JOIN eb_system_admin sa ON i.auditor_id = sa.id
+        WHERE i.is_del = 0
+        <if test="request.keywords != null and request.keywords != ''">
+            AND (i.invoice_code LIKE CONCAT('%', #{request.keywords}, '%')
+            OR i.order_no LIKE CONCAT('%', #{request.keywords}, '%'))
+        </if>
+        <if test="request.merchantName != null and request.merchantName != ''">
+            AND m.name LIKE CONCAT('%', #{request.merchantName}, '%')
+        </if>
+        <if test="request.merId != null">
+            AND i.mer_id = #{request.merId}
+        </if>
+        <if test="request.uid != null">
+            AND i.uid = #{request.uid}
+        </if>
+        <if test="request.userKeywords != null and request.userKeywords != ''">
+            AND (u.account LIKE CONCAT('%', #{request.userKeywords}, '%') 
+                OR u.phone LIKE CONCAT('%', #{request.userKeywords}, '%')
+                OR u.nickname LIKE CONCAT('%', #{request.userKeywords}, '%'))
+        </if>
+        <if test="request.invoiceTitle != null and request.invoiceTitle != ''">
+            AND i.invoice_title LIKE CONCAT('%', #{request.invoiceTitle}, '%')
+        </if>
+        <if test="request.invoiceType != null">
+            AND i.invoice_type = #{request.invoiceType}
+        </if>
+        <if test="request.invoiceTitleType != null">
+            AND i.invoice_title_type = #{request.invoiceTitleType}
+        </if>
+        <if test="request.status != null">
+            AND i.status = #{request.status}
+        </if>
+        <if test="request.auditStatus != null">
+            AND i.audit_status = #{request.auditStatus}
+        </if>
+        <if test="request.startTime != null and request.startTime != ''">
+            AND i.create_time >= #{request.startTime}
+        </if>
+        <if test="request.endTime != null and request.endTime != ''">
+            AND i.create_time &lt;= #{request.endTime}
+        </if>
+        <if test="request.orderStatus != null">
+            AND o.status = #{request.orderStatus}
+        </if>
+        ORDER BY i.create_time DESC
+    </select>
+
+    <!-- 获取发票各状态数量统计 -->
+    <select id="getInvoiceCountByStatus" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT i.id)
+        FROM eb_invoice i
+        LEFT JOIN eb_user u ON i.uid = u.id
+        LEFT JOIN eb_merchant m ON i.mer_id = m.id
+        LEFT JOIN eb_order o ON i.order_no = o.order_no
+        WHERE i.is_del = 0
+        <if test="request.merchantName != null and request.merchantName != ''">
+            AND m.name LIKE CONCAT('%', #{request.merchantName}, '%')
+        </if>
+        <if test="request.merId != null">
+            AND i.mer_id = #{request.merId}
+        </if>
+        <if test="request.uid != null">
+            AND i.uid = #{request.uid}
+        </if>
+        <if test="request.userKeywords != null and request.userKeywords != ''">
+            AND (u.account LIKE CONCAT('%', #{request.userKeywords}, '%') 
+                OR u.phone LIKE CONCAT('%', #{request.userKeywords}, '%')
+                OR u.nickname LIKE CONCAT('%', #{request.userKeywords}, '%'))
+        </if>
+        <if test="request.startTime != null and request.startTime != ''">
+            AND i.create_time >= #{request.startTime}
+        </if>
+        <if test="request.endTime != null and request.endTime != ''">
+            AND i.create_time &lt;= #{request.endTime}
+        </if>
+        <if test="request.status != null">
+            AND i.status = #{request.status}
+        </if>
+        <if test="request.auditStatus != null">
+            AND i.audit_status = #{request.auditStatus}
+        </if>
+        <if test="orderStatus != null">
+            AND o.status = #{orderStatus}
+        </if>
+    </select>
+
+    <!-- 根据订单号获取发票信息 -->
+    <select id="getByOrderNo" resultType="com.zbkj.common.model.invoice.Invoice">
+        SELECT * FROM eb_invoice
+        WHERE order_no = #{orderNo} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据发票申请单号获取发票信息 -->
+    <select id="getByInvoiceNo" resultType="com.zbkj.common.model.invoice.Invoice">
+        SELECT * FROM eb_invoice
+        WHERE invoice_no = #{invoiceNo} AND is_del = 0
+        LIMIT 1
+    </select>
+
+</mapper> 

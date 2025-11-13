@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.StockOutRecordDao">
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, record_no, product_id, product_name, product_images, sku, mer_id, before_stock, out_quantity, after_stock, cost_price, 
+        total_amount, out_type, remark, operator_id, operator_name, order_no, create_time, update_time, is_del
+    </sql>
+
+</mapper> 

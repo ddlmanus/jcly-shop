@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CsjProductDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.zbkj.common.model.product.CsjProduct">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="image" property="image" />
+        <result column="slider_image" property="sliderImage" />
+        <result column="intro" property="intro" />
+        <result column="category_name" property="categoryName" />
+        <result column="brand_name" property="brandName" />
+        <result column="price" property="price" />
+        <result column="original_price" property="originalPrice" />
+        <result column="stock" property="stock" />
+        <result column="sales" property="sales" />
+        <result column="unit_name" property="unitName" />
+        <result column="weight" property="weight" />
+        <result column="volume" property="volume" />
+        <result column="product_code" property="productCode" />
+        <result column="is_show" property="isShow" />
+        <result column="jump_url" property="jumpUrl" />
+        <result column="sort" property="sort" />
+        <result column="is_del" property="isDel" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, name, image, slider_image, intro, category_name, brand_name, price, original_price, stock, sales, unit_name, weight, volume, product_code, is_show, jump_url, sort, is_del, create_time, update_time
+    </sql>
+
+</mapper>

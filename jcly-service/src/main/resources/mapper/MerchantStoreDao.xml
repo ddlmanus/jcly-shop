@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.MerchantStoreDao">
+
+    <!-- 获取商户门店列表（带商户名称） -->
+    <select id="getStoreListWithMerchant" resultType="com.zbkj.common.model.merchant.MerchantStore">
+        SELECT 
+            s.*,
+            m.mer_name as merchantName
+        FROM eb_merchant_store s
+        LEFT JOIN eb_merchant m ON s.mer_id = m.id
+        <where>
+            <if test="params.merId != null">
+                AND s.mer_id = #{params.merId}
+            </if>
+            <if test="params.storeCode != null and params.storeCode != ''">
+                AND s.store_code LIKE CONCAT('%', #{params.storeCode}, '%')
+            </if>
+            <if test="params.storeName != null and params.storeName != ''">
+                AND s.store_name LIKE CONCAT('%', #{params.storeName}, '%')
+            </if>
+            <if test="params.storeType != null and params.storeType != ''">
+                AND s.store_type = #{params.storeType}
+            </if>
+            <if test="params.contactPerson != null and params.contactPerson != ''">
+                AND s.contact_person LIKE CONCAT('%', #{params.contactPerson}, '%')
+            </if>
+            <if test="params.contactPhone != null and params.contactPhone != ''">
+                AND s.contact_phone LIKE CONCAT('%', #{params.contactPhone}, '%')
+            </if>
+            <if test="params.province != null and params.province != ''">
+                AND s.province = #{params.province}
+            </if>
+            <if test="params.city != null and params.city != ''">
+                AND s.city = #{params.city}
+            </if>
+            <if test="params.district != null and params.district != ''">
+                AND s.district = #{params.district}
+            </if>
+            <if test="params.status != null">
+                AND s.status = #{params.status}
+            </if>
+            <if test="params.isMain != null">
+                AND s.is_main = #{params.isMain}
+            </if>
+            <if test="params.keyword != null and params.keyword != ''">
+                AND (s.store_name LIKE CONCAT('%', #{params.keyword}, '%')
+                     OR s.contact_person LIKE CONCAT('%', #{params.keyword}, '%')
+                     OR s.contact_phone LIKE CONCAT('%', #{params.keyword}, '%'))
+            </if>
+            <if test="params.merchantName != null and params.merchantName != ''">
+                AND m.mer_name LIKE CONCAT('%', #{params.merchantName}, '%')
+            </if>
+            <if test="params.startTime != null and params.startTime != ''">
+                AND s.create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND s.create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        <if test="params.orderBy != null and params.orderBy != ''">
+            ORDER BY ${params.orderBy}
+        </if>
+    </select>
+
+    <!-- 根据商户ID获取门店列表 -->
+    <select id="getStoreListByMerId" resultType="com.zbkj.common.model.merchant.MerchantStore">
+        SELECT * FROM eb_merchant_store 
+        WHERE mer_id = #{merId} 
+        ORDER BY is_main DESC, sort ASC, create_time DESC
+    </select>
+
+    <!-- 获取商户的主门店 -->
+    <select id="getMainStoreByMerId" resultType="com.zbkj.common.model.merchant.MerchantStore">
+        SELECT * FROM eb_merchant_store 
+        WHERE mer_id = #{merId} AND is_main = 1 
+        LIMIT 1
+    </select>
+
+    <!-- 根据位置查找附近的门店 -->
+    <select id="getNearbyStores" resultType="com.zbkj.common.model.merchant.MerchantStore">
+        SELECT 
+            *,
+            (6371 * acos(cos(radians(#{latitude})) * cos(radians(latitude)) * 
+             cos(radians(longitude) - radians(#{longitude})) + 
+             sin(radians(#{latitude})) * sin(radians(latitude)))) AS distance
+        FROM eb_merchant_store 
+        WHERE latitude IS NOT NULL 
+          AND longitude IS NOT NULL 
+          AND status = 1
+        HAVING distance &lt;= #{radius}
+        ORDER BY distance ASC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 获取门店统计信息 -->
+    <select id="getStoreStatistics" resultType="map">
+        SELECT 
+            COUNT(*) as totalOrders,
+            COALESCE(SUM(total_amount), 0) as totalSales,
+            COALESCE(AVG(total_amount), 0) as avgOrderAmount,
+            MAX(create_time) as lastOrderTime
+        FROM eb_order 
+        WHERE store_id = #{storeId} 
+          AND paid = 1 
+          AND is_del = 0
+    </select>
+
+    <!-- 批量更新门店状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE eb_merchant_store 
+        SET status = #{status}, update_time = NOW()
+        WHERE id IN 
+        <foreach collection="storeIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 检查门店编码是否已存在 -->
+    <select id="checkStoreCodeExists" resultType="int">
+        SELECT COUNT(*) FROM eb_merchant_store 
+        WHERE mer_id = #{merId} 
+          AND store_code = #{storeCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 获取商户门店数量统计 -->
+    <select id="getMerchantStoreCount" resultType="map">
+        SELECT 
+            COUNT(*) as totalStores,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as activeStores,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as inactiveStores,
+            SUM(CASE WHEN is_main = 1 THEN 1 ELSE 0 END) as mainStores,
+            SUM(CASE WHEN store_type = 'PHYSICAL' THEN 1 ELSE 0 END) as physicalStores,
+            SUM(CASE WHEN store_type = 'ONLINE' THEN 1 ELSE 0 END) as onlineStores,
+            SUM(CASE WHEN store_type = 'WAREHOUSE' THEN 1 ELSE 0 END) as warehouseStores
+        FROM eb_merchant_store 
+        WHERE mer_id = #{merId}
+    </select>
+
+</mapper> 

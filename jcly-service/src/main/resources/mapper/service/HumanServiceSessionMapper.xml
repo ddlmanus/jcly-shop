@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.HumanServiceSessionDao">
+
+    <!-- 根据企业会话ID查询人工客服会话 -->
+    <select id="selectByEnterpriseSessionId" resultType="com.zbkj.common.model.service.HumanServiceSession">
+        SELECT * FROM eb_human_service_session
+        WHERE enterprise_session_id = #{enterpriseSessionId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 获取等待中的会话列表 -->
+    <select id="selectWaitingSessions" resultType="com.zbkj.common.model.service.HumanServiceSession">
+        SELECT * FROM eb_human_service_session
+        WHERE mer_id = #{merId} 
+        AND session_status = 'WAITING'
+        ORDER BY priority DESC, wait_start_time ASC
+    </select>
+
+    <!-- 获取客服当前会话数 -->
+    <select id="countCurrentSessions" resultType="Integer">
+        SELECT COUNT(*) FROM eb_human_service_session
+        WHERE staff_id = #{staffId} 
+        AND session_status = 'ACTIVE'
+    </select>
+
+    <!-- 获取排队统计信息 -->
+    <select id="getQueueStatistics" resultType="Map">
+        SELECT 
+            COUNT(*) as waitingCount,
+            AVG(TIMESTAMPDIFF(SECOND, wait_start_time, NOW())) as avgWaitTime
+        FROM eb_human_service_session
+        WHERE mer_id = #{merId} 
+        AND session_status = 'WAITING'
+    </select>
+
+    <!-- 获取客服会话统计 -->
+    <select id="getStaffSessionStatistics" resultType="Map">
+        SELECT 
+            staff_id as staffId,
+            COUNT(*) as totalSessions,
+            AVG(total_service_time) as avgServiceTime,
+            AVG(user_satisfaction) as avgSatisfaction
+        FROM eb_human_service_session
+        WHERE mer_id = #{merId}
+        <if test="startDate != null and startDate != ''">
+            AND create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND create_time &lt;= #{endDate}
+        </if>
+        AND staff_id IS NOT NULL
+        GROUP BY staff_id
+    </select>
+
+    <!-- 更新会话状态 -->
+    <update id="updateSessionStatus">
+        UPDATE eb_human_service_session
+        SET session_status = #{status},
+            staff_id = #{staffId},
+            update_time = NOW()
+        WHERE session_id = #{sessionId}
+    </update>
+
+</mapper>

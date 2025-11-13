@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryExceptionDao">
+
+    <!-- 根据配送订单号获取异常记录 -->
+    <select id="getExceptionsByDeliveryOrderNo" resultType="com.zbkj.common.model.order.CityDeliveryException">
+        SELECT * FROM eb_city_delivery_exception 
+        WHERE delivery_order_no = #{deliveryOrderNo}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据配送员ID获取异常记录 -->
+    <select id="getExceptionsByDriverId" resultType="com.zbkj.common.model.order.CityDeliveryException">
+        SELECT * FROM eb_city_delivery_exception 
+        WHERE driver_id = #{driverId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据异常类型获取异常记录 -->
+    <select id="getExceptionsByType" resultType="com.zbkj.common.model.order.CityDeliveryException">
+        SELECT * FROM eb_city_delivery_exception 
+        WHERE exception_type = #{exceptionType}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据处理状态获取异常记录 -->
+    <select id="getExceptionsByHandleStatus" resultType="com.zbkj.common.model.order.CityDeliveryException">
+        SELECT * FROM eb_city_delivery_exception 
+        WHERE handle_status = #{handleStatus}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 获取待处理的异常记录 -->
+    <select id="getPendingExceptions" resultType="com.zbkj.common.model.order.CityDeliveryException">
+        SELECT * FROM eb_city_delivery_exception 
+        WHERE handle_status IN (0, 1)
+        ORDER BY exception_level DESC, create_time ASC
+    </select>
+
+    <!-- 更新异常处理状态 -->
+    <update id="updateExceptionHandleStatus">
+        UPDATE eb_city_delivery_exception 
+        SET handle_status = #{handleStatus},
+            handle_result = #{handleResult},
+            handler_id = #{handlerId},
+            handle_time = NOW(),
+            update_time = NOW()
+        WHERE id = #{exceptionId}
+    </update>
+
+    <!-- 根据举报人类型获取异常记录 -->
+    <select id="getExceptionsByReporterType" resultType="com.zbkj.common.model.order.CityDeliveryException">
+        SELECT * FROM eb_city_delivery_exception 
+        WHERE reporter_type = #{reporterType}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 获取配送员异常统计 -->
+    <select id="getDriverExceptionCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) 
+        FROM eb_city_delivery_exception 
+        WHERE driver_id = #{driverId}
+    </select>
+
+    <!-- 批量更新异常处理状态 -->
+    <update id="batchUpdateExceptionHandleStatus">
+        UPDATE eb_city_delivery_exception 
+        SET handle_status = #{handleStatus},
+            update_time = NOW()
+        WHERE id IN 
+        <foreach collection="exceptionIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper> 

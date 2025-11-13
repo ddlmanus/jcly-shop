@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.ContactRelationshipDao">
+
+    <!-- 根据拥有者ID查询联系人列表 -->
+    <select id="selectByOwnerId" resultType="com.zbkj.common.model.service.ContactRelationship">
+        SELECT * FROM eb_contact_relationship
+        WHERE owner_id = #{ownerId}
+        AND owner_type = #{ownerType}
+        <if test="keyword != null and keyword != ''">
+            AND (contact_name LIKE CONCAT('%', #{keyword}, '%') 
+                 OR phone LIKE CONCAT('%', #{keyword}, '%')
+                 OR remarks LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY is_pinned DESC, last_contact_time DESC
+    </select>
+
+    <!-- 根据联系人ID和拥有者查询关系 -->
+    <select id="selectByContactIdAndOwner" resultType="com.zbkj.common.model.service.ContactRelationship">
+        SELECT * FROM eb_contact_relationship
+        WHERE owner_id = #{ownerId}
+        AND owner_type = #{ownerType}
+        AND contact_id = #{contactId}
+        AND contact_type = #{contactType}
+        LIMIT 1
+    </select>
+
+    <!-- 更新置顶状态 -->
+    <update id="updatePinnedStatus">
+        UPDATE eb_contact_relationship
+        SET is_pinned = #{isPinned}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新最后联系时间 -->
+    <update id="updateLastContactTime">
+        UPDATE eb_contact_relationship
+        SET last_contact_time = NOW(), update_time = NOW()
+        WHERE owner_id = #{ownerId}
+        AND owner_type = #{ownerType}
+        AND contact_id = #{contactId}
+        AND contact_type = #{contactType}
+    </update>
+
+    <!-- 搜索联系人 -->
+    <select id="searchContacts" resultType="com.zbkj.common.model.service.ContactRelationship">
+        SELECT * FROM eb_contact_relationship
+        WHERE owner_id = #{ownerId}
+        AND owner_type = #{ownerType}
+        AND (contact_name LIKE CONCAT('%', #{keyword}, '%') 
+             OR phone LIKE CONCAT('%', #{keyword}, '%')
+             OR email LIKE CONCAT('%', #{keyword}, '%')
+             OR remarks LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY is_pinned DESC, last_contact_time DESC
+        LIMIT 20
+    </select>
+
+    <!-- 获取联系人分组统计 -->
+    <select id="getContactGroups" resultType="Map">
+        SELECT 
+            contact_type as groupName,
+            COUNT(*) as count
+        FROM eb_contact_relationship
+        WHERE owner_id = #{ownerId}
+        AND owner_type = #{ownerType}
+        GROUP BY contact_type
+        ORDER BY count DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryDriverDao">
+
+    <!-- 根据位置获取附近的配送员 -->
+    <select id="getNearbyDrivers" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE is_del = 0 
+        AND status = 1 
+        AND available_status = 1
+        AND certification_status = 2
+        AND longitude IS NOT NULL 
+        AND latitude IS NOT NULL
+        AND (
+            6371 * acos(
+                cos(radians(#{latitude})) 
+                * cos(radians(latitude)) 
+                * cos(radians(longitude) - radians(#{longitude})) 
+                + sin(radians(#{latitude})) 
+                * sin(radians(latitude))
+            )
+        ) &lt;= #{radius}
+        ORDER BY (
+            6371 * acos(
+                cos(radians(#{latitude})) 
+                * cos(radians(latitude)) 
+                * cos(radians(longitude) - radians(#{longitude})) 
+                + sin(radians(#{latitude})) 
+                * sin(radians(latitude))
+            )
+        ) ASC
+    </select>
+
+    <!-- 获取在线配送员 -->
+    <select id="getOnlineDrivers" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE is_del = 0 
+        AND status = 1
+        ORDER BY rating DESC, total_deliveries DESC
+    </select>
+
+    <!-- 获取可用配送员（在线且可接单） -->
+    <select id="getAvailableDrivers" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE is_del = 0 
+        AND status = 1 
+        AND available_status = 1
+        AND certification_status = 2
+        AND current_orders &lt; max_orders
+        ORDER BY rating DESC, current_orders ASC
+    </select>
+
+    <!-- 根据区域获取配送员 -->
+    <select id="getDriversByArea" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE is_del = 0 
+        AND work_area LIKE CONCAT('%', #{workArea}, '%')
+        ORDER BY status DESC, rating DESC
+    </select>
+
+    <!-- 更新配送员位置 -->
+    <update id="updateDriverLocation">
+        UPDATE eb_city_delivery_driver 
+        SET longitude = #{longitude}, 
+            latitude = #{latitude}, 
+            current_longitude = #{longitude}, 
+            current_latitude = #{latitude}, 
+            current_address = #{address}, 
+            location_update_time = NOW(),
+            update_time = NOW()
+        WHERE id = #{driverId} AND is_del = 0
+    </update>
+
+    <!-- 更新配送员状态 -->
+    <update id="updateDriverStatus">
+        UPDATE eb_city_delivery_driver 
+        SET status = #{status}, 
+            update_time = NOW()
+            <if test="status == 1">
+            , last_online_time = NOW()
+            </if>
+        WHERE id = #{driverId} AND is_del = 0
+    </update>
+
+    <!-- 批量更新配送员状态 -->
+    <update id="batchUpdateDriverStatus">
+        UPDATE eb_city_delivery_driver 
+        SET status = #{status}, 
+            update_time = NOW()
+        WHERE id IN 
+        <foreach collection="driverIds" item="driverId" open="(" separator="," close=")">
+            #{driverId}
+        </foreach>
+        AND is_del = 0
+    </update>
+
+    <!-- 获取配送员统计信息 -->
+    <select id="getDriverWithStats" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE id = #{driverId} AND is_del = 0
+    </select>
+
+    <!-- 更新配送员订单数 -->
+    <update id="updateDriverOrderCount">
+        UPDATE eb_city_delivery_driver 
+        SET current_orders = GREATEST(current_orders + #{increment}, 0),
+            update_time = NOW()
+        WHERE id = #{driverId} AND is_del = 0
+    </update>
+
+    <!-- 更新配送员收入 -->
+    <update id="updateDriverIncome">
+        UPDATE eb_city_delivery_driver 
+        SET total_income = total_income + #{income},
+            monthly_income = monthly_income + #{income},
+            update_time = NOW()
+        WHERE id = #{driverId} AND is_del = 0
+    </update>
+
+    <!-- 获取认证通过的配送员 -->
+    <select id="getCertifiedDrivers" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE is_del = 0 
+        AND certification_status = 2
+        ORDER BY rating DESC, total_deliveries DESC
+    </select>
+
+    <!-- 根据手机号获取配送员 -->
+    <select id="getDriverByPhone" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE phone = #{phone} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据配送员编号获取配送员 -->
+    <select id="getDriverByCode" resultType="com.zbkj.common.model.order.CityDeliveryDriver">
+        SELECT * FROM eb_city_delivery_driver 
+        WHERE driver_code = #{driverCode} AND is_del = 0
+        LIMIT 1
+    </select>
+
+</mapper> 

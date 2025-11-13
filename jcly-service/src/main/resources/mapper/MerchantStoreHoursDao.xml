@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.MerchantStoreHoursDao">
+
+    <!-- 根据门店ID获取营业时间配置 -->
+    <select id="getByStoreId" resultType="com.zbkj.common.model.merchant.MerchantStoreHours">
+        SELECT * FROM eb_merchant_store_hours 
+        WHERE store_id = #{storeId} 
+        ORDER BY day_of_week ASC
+    </select>
+
+    <!-- 批量插入营业时间配置 -->
+    <insert id="batchInsert">
+        INSERT INTO eb_merchant_store_hours 
+        (store_id, day_of_week, is_open, open_time, close_time, break_start_time, break_end_time, remarks, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.storeId}, #{item.dayOfWeek}, #{item.isOpen}, #{item.openTime}, #{item.closeTime}, 
+             #{item.breakStartTime}, #{item.breakEndTime}, #{item.remarks}, #{item.createTime}, #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <!-- 批量更新营业时间配置 -->
+    <update id="batchUpdate">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE eb_merchant_store_hours 
+            SET is_open = #{item.isOpen},
+                open_time = #{item.openTime},
+                close_time = #{item.closeTime},
+                break_start_time = #{item.breakStartTime},
+                break_end_time = #{item.breakEndTime},
+                remarks = #{item.remarks},
+                update_time = #{item.updateTime}
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+    <!-- 根据门店ID删除营业时间配置 -->
+    <delete id="deleteByStoreId">
+        DELETE FROM eb_merchant_store_hours WHERE store_id = #{storeId}
+    </delete>
+
+    <!-- 获取当前营业的门店 -->
+    <select id="getOpenStoreIds" resultType="Integer">
+        SELECT DISTINCT h.store_id
+        FROM eb_merchant_store_hours h
+        INNER JOIN eb_merchant_store s ON h.store_id = s.id
+        WHERE h.day_of_week = #{dayOfWeek}
+          AND h.is_open = 1
+          AND s.status = 1
+          AND (
+              (h.break_start_time IS NULL OR h.break_end_time IS NULL) 
+              OR (#{currentTime} NOT BETWEEN h.break_start_time AND h.break_end_time)
+          )
+          AND #{currentTime} BETWEEN h.open_time AND h.close_time
+    </select>
+
+</mapper> 

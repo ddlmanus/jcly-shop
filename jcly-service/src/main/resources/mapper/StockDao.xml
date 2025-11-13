@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.StockDao">
+
+    <select id="getStockPage" resultType="com.zbkj.common.response.StockResponse">
+        SELECT 
+            s.id,
+            s.product_id AS productId,
+            p.name AS productName,
+            p.image AS productImage,
+            s.sku,
+            s.mer_id AS merId,
+            m.mer_name AS merName,
+            p.is_show AS isShow,
+            pav.price,
+            s.stock,
+            COALESCE(sir_total.total_in_quantity, 0) AS totalStock,
+            s.cost_price AS costPrice,
+            s.update_time AS updateTime
+        FROM eb_stock s
+        INNER JOIN eb_product p ON s.product_id = p.id AND p.is_del = 0
+        INNER JOIN eb_merchant_info m ON s.mer_id = m.mer_id AND m.is_del = 0
+        LEFT JOIN eb_product_attr_value pav ON s.product_id = pav.product_id 
+            AND s.sku = pav.sku 
+            AND pav.is_del = 0
+        LEFT JOIN (
+            SELECT 
+                product_id,
+                sku,
+                SUM(in_quantity) AS total_in_quantity
+            FROM eb_stock_in_record 
+            WHERE is_del = 0
+            GROUP BY product_id, sku
+        ) sir_total ON s.product_id = sir_total.product_id AND s.sku = sir_total.sku
+        WHERE s.is_del = 0
+        <if test="merId != null">
+            AND s.mer_id = #{merId}
+        </if>
+        <if test="productId != null">
+            AND s.product_id = #{productId}
+        </if>
+        <if test="keywords != null and keywords != ''">
+            AND (
+                p.name LIKE CONCAT('%', #{keywords}, '%')
+                OR s.sku LIKE CONCAT('%', #{keywords}, '%')
+                OR m.mer_name LIKE CONCAT('%', #{keywords}, '%')
+            )
+        </if>
+        <if test="stockAlert != null">
+            <if test="stockAlert == 1">
+                <!-- 低库存预警：库存小于等于预警值 -->
+                AND s.stock &lt;= COALESCE(p.stock_warning, 10)
+            </if>
+            <if test="stockAlert == 2">
+                <!-- 正常库存：库存大于预警值 -->
+                AND s.stock > COALESCE(p.stock_warning, 10)
+            </if>
+        </if>
+        ORDER BY s.update_time DESC, s.id DESC
+    </select>
+
+</mapper>

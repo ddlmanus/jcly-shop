@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.StockDao">
+
+    <select id="getStockPage" resultType="com.zbkj.common.response.StockResponse" parameterType="Map">
+        SELECT s.id, 
+               s.product_id as productId, 
+               s.sku, 
+               s.mer_id as merId, 
+               s.stock, 
+               COALESCE(p.stock, 0) as totalStock,
+               s.cost_price as costPrice, 
+               s.update_time as updateTime,
+               p.name as productName, 
+               p.image as productImage,
+               p.is_show as isShow,
+               p.price as price,
+               m.name as merName
+        FROM eb_stock s
+        LEFT JOIN eb_product p ON s.product_id = p.id
+        LEFT JOIN eb_merchant m ON s.mer_id = m.id
+        LEFT JOIN (
+            SELECT product_id, sku, mer_id, SUM(in_quantity) as total_in_quantity
+            FROM eb_stock_in_record 
+            WHERE is_del = 0 
+            GROUP BY product_id, sku, mer_id
+        ) total_in ON s.product_id = total_in.product_id AND s.sku = total_in.sku AND s.mer_id = total_in.mer_id
+        WHERE s.is_del = 0 AND p.is_del = 0
+        <if test="keywords != null and keywords != ''">
+            AND (p.name LIKE CONCAT('%', #{keywords}, '%') OR s.sku LIKE CONCAT('%', #{keywords}, '%'))
+        </if>
+        <if test="productId != null">
+            AND s.product_id = #{productId}
+        </if>
+        <if test="merId != null">
+            AND s.mer_id = #{merId}
+        </if>
+        ORDER BY s.update_time DESC, s.id DESC
+    </select>
+
+</mapper> 

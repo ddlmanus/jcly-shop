@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryTrackDao">
+
+    <!-- 根据配送订单号获取轨迹列表 -->
+    <select id="getTracksByDeliveryOrderNo" resultType="com.zbkj.common.model.order.CityDeliveryTrack">
+        SELECT * FROM eb_city_delivery_track 
+        WHERE delivery_order_no = #{deliveryOrderNo}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 根据配送员ID获取轨迹列表 -->
+    <select id="getTracksByDriverId" resultType="com.zbkj.common.model.order.CityDeliveryTrack">
+        SELECT * FROM eb_city_delivery_track 
+        WHERE driver_id = #{driverId}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 获取最新的轨迹记录 -->
+    <select id="getLatestTrack" resultType="com.zbkj.common.model.order.CityDeliveryTrack">
+        SELECT * FROM eb_city_delivery_track 
+        WHERE delivery_order_no = #{deliveryOrderNo}
+        ORDER BY create_time DESC 
+        LIMIT 1
+    </select>
+
+    <!-- 根据状态码获取轨迹 -->
+    <select id="getTracksByStatusCode" resultType="com.zbkj.common.model.order.CityDeliveryTrack">
+        SELECT * FROM eb_city_delivery_track 
+        WHERE status_code = #{statusCode}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据轨迹类型获取轨迹 -->
+    <select id="getTracksByType" resultType="com.zbkj.common.model.order.CityDeliveryTrack">
+        SELECT * FROM eb_city_delivery_track 
+        WHERE track_type = #{trackType}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 删除配送订单的轨迹记录 -->
+    <delete id="deleteTracksByDeliveryOrderNo">
+        DELETE FROM eb_city_delivery_track 
+        WHERE delivery_order_no = #{deliveryOrderNo}
+    </delete>
+
+    <!-- 获取配送员的实时位置 -->
+    <select id="getDriverLatestLocation" resultType="com.zbkj.common.model.order.CityDeliveryTrack">
+        SELECT * FROM eb_city_delivery_track 
+        WHERE driver_id = #{driverId}
+        AND track_type = 1
+        ORDER BY create_time DESC 
+        LIMIT 1
+    </select>
+
+    <!-- 批量插入轨迹记录 -->
+    <insert id="batchInsertTracks" parameterType="list">
+        INSERT INTO eb_city_delivery_track (
+            delivery_order_no, driver_id, longitude, latitude, address, 
+            status, status_code, track_type, distance_from_start, 
+            speed, direction, remark, create_time
+        ) VALUES
+        <foreach collection="tracks" item="item" separator=",">
+            (
+                #{item.deliveryOrderNo}, #{item.driverId}, #{item.longitude}, #{item.latitude}, #{item.address},
+                #{item.status}, #{item.statusCode}, #{item.trackType}, #{item.distanceFromStart},
+                #{item.speed}, #{item.direction}, #{item.remark}, #{item.createTime}
+            )
+        </foreach>
+    </insert>
+
+</mapper> 

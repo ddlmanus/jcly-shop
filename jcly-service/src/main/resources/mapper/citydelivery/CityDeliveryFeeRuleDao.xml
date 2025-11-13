@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryFeeRuleDao">
+
+    <!-- 获取启用的费用规则 -->
+    <select id="getEnabledRules" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT * FROM eb_city_delivery_fee_rule 
+        WHERE is_del = 0 
+        AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 根据配送类型获取费用规则 -->
+    <select id="getRulesByDeliveryType" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT * FROM eb_city_delivery_fee_rule 
+        WHERE is_del = 0 
+        AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 根据区域获取费用规则 -->
+    <select id="getRuleByArea" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT fr.* FROM eb_city_delivery_fee_rule fr
+        INNER JOIN eb_city_delivery_area a ON a.fee_rule_id = fr.id
+        WHERE a.id = #{areaId} 
+        AND fr.is_del = 0 
+        AND fr.status = 1
+        AND a.is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据规则名称获取费用规则 -->
+    <select id="getRuleByName" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT * FROM eb_city_delivery_fee_rule 
+        WHERE rule_name = #{ruleName} 
+        AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 更新费用规则状态 -->
+    <update id="updateRuleStatus">
+        UPDATE eb_city_delivery_fee_rule 
+        SET status = #{status}, 
+            update_time = NOW()
+        WHERE id = #{ruleId} AND is_del = 0
+    </update>
+
+    <!-- 批量更新费用规则状态 -->
+    <update id="batchUpdateRuleStatus">
+        UPDATE eb_city_delivery_fee_rule 
+        SET status = #{status}, 
+            update_time = NOW()
+        WHERE id IN 
+        <foreach collection="ruleIds" item="ruleId" open="(" separator="," close=")">
+            #{ruleId}
+        </foreach>
+        AND is_del = 0
+    </update>
+
+    <!-- 获取默认费用规则 -->
+    <select id="getDefaultRule" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT * FROM eb_city_delivery_fee_rule 
+        WHERE is_del = 0 
+        AND status = 1
+        ORDER BY sort ASC, create_time ASC
+        LIMIT 1
+    </select>
+
+    <!-- 获取有效的费用规则（在有效期内） -->
+    <select id="getEffectiveRules" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT * FROM eb_city_delivery_fee_rule 
+        WHERE is_del = 0 
+        AND status = 1
+        AND (effective_time IS NULL OR effective_time <= NOW())
+        AND (expire_time IS NULL OR expire_time > NOW())
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- 根据适用区域获取费用规则 -->
+    <select id="getRulesByApplicableAreas" resultType="com.zbkj.common.model.order.CityDeliveryFeeRule">
+        SELECT * FROM eb_city_delivery_fee_rule 
+        WHERE is_del = 0 
+        AND status = 1
+        AND (applicable_areas IS NULL OR applicable_areas = '' OR applicable_areas LIKE CONCAT('%%', #{areaIds}, '%%'))
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+</mapper> 

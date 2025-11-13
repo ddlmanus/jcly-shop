@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CustomerServiceConfigDao">
+
+    <!-- 根据商户ID获取配置 -->
+    <select id="selectByMerId" resultType="com.zbkj.common.model.service.CustomerServiceConfig">
+        SELECT * FROM eb_customer_service_config
+        WHERE mer_id = #{merId}
+        LIMIT 1
+    </select>
+
+    <!-- 更新或插入配置 -->
+    <insert id="insertOrUpdate" parameterType="com.zbkj.common.model.service.CustomerServiceConfig">
+        INSERT INTO eb_customer_service_config (
+            mer_id, service_name, welcome_message, max_concurrent_sessions,
+            work_days, auto_reply_enabled, auto_reply_delay, transfer_keywords,
+            satisfaction_enabled, session_timeout, status, create_time, update_time
+        ) VALUES (
+            #{merId}, #{serviceName}, #{welcomeMessage}, #{maxConcurrentSessions},
+            #{workDays}, #{autoReplyEnabled}, #{autoReplyDelay}, #{transferKeywords},
+            #{satisfactionEnabled}, #{sessionTimeout}, #{status}, #{createTime}, #{updateTime}
+        )
+        ON DUPLICATE KEY UPDATE
+            service_name = VALUES(service_name),
+            welcome_message = VALUES(welcome_message),
+            max_concurrent_sessions = VALUES(max_concurrent_sessions),
+            work_days = VALUES(work_days),
+            auto_reply_enabled = VALUES(auto_reply_enabled),
+            auto_reply_delay = VALUES(auto_reply_delay),
+            transfer_keywords = VALUES(transfer_keywords),
+            satisfaction_enabled = VALUES(satisfaction_enabled),
+            session_timeout = VALUES(session_timeout),
+            status = VALUES(status),
+            update_time = VALUES(update_time)
+    </insert>
+
+</mapper>

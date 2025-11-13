@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zbkj.service.dao.CityDeliveryOrderDao">
+
+    <!-- 根据订单号获取配送订单 -->
+    <select id="getOrderByOrderNo" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE order_no = #{orderNo} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据配送订单号获取配送订单 -->
+    <select id="getOrderByDeliveryOrderNo" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE delivery_order_no = #{deliveryOrderNo} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据配送员ID获取配送订单 -->
+    <select id="getOrdersByDriverId" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE driver_id = #{driverId} AND is_del = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据商户ID获取配送订单 -->
+    <select id="getOrdersByMerId" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE mer_id = #{merId} AND is_del = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据用户ID获取配送订单 -->
+    <select id="getOrdersByUserId" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE uid = #{userId} AND is_del = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据配送状态获取配送订单 -->
+    <select id="getOrdersByStatus" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE delivery_status = #{status} AND is_del = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 获取配送员当前配送订单 -->
+    <select id="getDriverCurrentOrders" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE driver_id = #{driverId} 
+        AND delivery_status IN (1, 2, 3) 
+        AND is_del = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 获取待分配的配送订单 -->
+    <select id="getPendingOrders" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE delivery_status = 0 
+        AND is_del = 0
+        ORDER BY urgency_level DESC, create_time ASC
+    </select>
+
+    <!-- 更新配送订单状态 -->
+    <update id="updateOrderStatus">
+        UPDATE eb_city_delivery_order 
+        SET delivery_status = #{status}, 
+            update_time = #{updateTime}
+            <if test="status == 3">
+            , start_delivery_time = #{updateTime}
+            </if>
+            <if test="status == 4">
+            , finish_time = #{updateTime}, actual_delivery_time = #{updateTime}
+            </if>
+            <if test="status == 9">
+            , cancel_time = #{updateTime}
+            </if>
+        WHERE delivery_order_no = #{deliveryOrderNo} AND is_del = 0
+    </update>
+
+    <!-- 分配配送员 -->
+    <update id="assignDriver">
+        UPDATE eb_city_delivery_order 
+        SET driver_id = #{driverId}, 
+            driver_name = #{driverName}, 
+            driver_phone = #{driverPhone}, 
+            delivery_status = 1,
+            update_time = NOW()
+        WHERE delivery_order_no = #{deliveryOrderNo} AND is_del = 0
+    </update>
+
+    <!-- 更新配送时间 -->
+    <update id="updateDeliveryTime">
+        UPDATE eb_city_delivery_order 
+        SET pickup_time = #{pickupTime}, 
+            actual_delivery_time = #{deliveryTime},
+            update_time = NOW()
+        WHERE delivery_order_no = #{deliveryOrderNo} AND is_del = 0
+    </update>
+
+    <!-- 获取超时的配送订单 -->
+    <select id="getTimeoutOrders" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE delivery_status IN (0, 1, 2, 3) 
+        AND is_del = 0
+        AND TIMESTAMPDIFF(MINUTE, create_time, NOW()) > #{timeoutMinutes}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 获取配送统计信息 -->
+    <select id="getOrderWithStats" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE delivery_order_no = #{deliveryOrderNo} AND is_del = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据时间范围获取配送订单 -->
+    <select id="getOrdersByTimeRange" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE is_del = 0
+        AND create_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 获取配送员今日订单数 -->
+    <select id="getDriverTodayOrderCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM eb_city_delivery_order 
+        WHERE driver_id = #{driverId} 
+        AND is_del = 0
+        AND DATE(create_time) = CURDATE()
+    </select>
+
+    <!-- 获取商户今日配送订单 -->
+    <select id="getMerTodayOrders" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE mer_id = #{merId} 
+        AND is_del = 0
+        AND DATE(create_time) = CURDATE()
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 批量更新配送订单状态 -->
+    <update id="batchUpdateOrderStatus">
+        UPDATE eb_city_delivery_order 
+        SET delivery_status = #{status}, 
+            update_time = NOW()
+        WHERE id IN 
+        <foreach collection="orderIds" item="orderId" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+        AND is_del = 0
+    </update>
+
+    <!-- 根据配送类型获取订单 -->
+    <select id="getOrdersByDeliveryType" resultType="com.zbkj.common.model.order.CityDeliveryOrder">
+        SELECT * FROM eb_city_delivery_order 
+        WHERE delivery_type = #{deliveryType} AND is_del = 0
+        ORDER BY create_time DESC
+    </select>
+
+</mapper> 
